@@ -4,7 +4,8 @@ from datetime import datetime
 from lxml import etree
 import locale
 import re
-from urllib.request import urlopen
+from urllib.request import urlopen, build_opener, HTTPCookieProcessor
+from http.cookiejar import CookieJar
 
 from gi.repository import Gtk, WebKit
 from django.template import Context, Template
@@ -17,8 +18,11 @@ locale.setlocale(locale.LC_ALL, 'cs_CZ')
 ##############################################################################
 # FETCHING:
 
+cj = CookieJar()
+opener = build_opener(HTTPCookieProcessor(cj))
+
 def fetch_tree(url):
-    response = urlopen(url)
+    response = opener.open(url)
     data = response.readall().decode('utf8').replace('\r\n', '')
     return etree.fromstring(data, parser=etree.HTMLParser())
 
@@ -32,7 +36,8 @@ def merge_meals_prices(meals, prices):
     return map(lambda m: {'name': m[0], 'price': m[1]},
                zip(meals, prices))
 
-def kaskada():
+def kaskada(branch_tag, branch_name):
+    opener.open('http://www.kaskadarestaurant.cz/%s' % branch_tag)
     tree = fetch_tree('http://www.kaskadarestaurant.cz/denni_nabidky')
     menu = tree.xpath(
         '//div[@class="menuDen" and text()="%s"]/following-sibling::table'
@@ -47,11 +52,17 @@ def kaskada():
     desserts = set(menu.xpath(
         './/td[text() = "Dezert"]/following-sibling::td/text()'))
     return {
-        'name': 'Kaskáda – Futurum',
+        'name': branch_name,
         'soup': soup,
         'meals': merge_meals_prices(meals, prices),
         'desserts': desserts,
         }
+
+def kaskadaF():
+    return kaskada('Ostrava', 'Kaskáda – Futurum')
+
+def kaskadaNK():
+    return kaskada('Ostrava_Nova_Karolina', 'Kaskáda – Nová Karolina')
 
 def jetset():
     tree = fetch_tree('http://www.jetsetostrava.cz/#poledni-nabidka')
@@ -68,7 +79,7 @@ def jetset():
 
 def tryFetchAll():
     data = []
-    for fetcher in [kaskada, jetset]:
+    for fetcher in [jetset, kaskadaNK, kaskadaF]:
         try:
             data += [fetcher()]
         except:
