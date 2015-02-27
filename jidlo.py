@@ -33,8 +33,8 @@ def kaskada_price(price):
     return '%s / %s' % (m.group('wo'), m.group('w'))
 
 def merge_meals_prices(meals, prices):
-    return map(lambda m: {'name': m[0], 'price': m[1]},
-               zip(meals, prices))
+    return list(map(lambda m: {'name': m[0], 'price': m[1]},
+                    zip(meals, prices)))
 
 def kaskada(branch_tag, branch_name):
     opener.open('http://www.kaskadarestaurant.cz/%s' % branch_tag)
