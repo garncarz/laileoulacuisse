@@ -42,7 +42,7 @@ def merge_meals_prices(meals, prices):
 def kaskada(branch_tag, branch_name):
     opener.open('http://www.kaskadarestaurant.cz/%s' % branch_tag)
     tree = fetch_tree('http://www.kaskadarestaurant.cz/denni_nabidky')
-    menus = tree.xpath('//div[@class="menuDen"]/following-sibling::table')
+    menus = tree.xpath('//table[@class="tblDen"]')
     meals = []
     for menu in menus:
         soups = set(menu.xpath(
@@ -52,7 +52,7 @@ def kaskada(branch_tag, branch_name):
         prices = map(kaskada_price,
                      menu.xpath('.//td[@class="cena"]/b/text()')[:-1:2])
         desserts = set(menu.xpath('''
-            .//td[text() = "Dezert" or text() = "Kompot"]
+            .//td[text() = "Dezert" or text() = "Kompot" or text() = "Salát"]
                 /following-sibling::td/text()
             '''))
         meals += [meals_dict(soups) + merge_meals_prices(mains, prices) +
