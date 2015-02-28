@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from lxml import etree
 import locale
 import re
@@ -17,6 +17,8 @@ locale.setlocale(locale.LC_ALL, 'cs_CZ')
 
 ##############################################################################
 # FETCHING:
+
+day = datetime.now()
 
 cj = CookieJar()
 opener = build_opener(HTTPCookieProcessor(cj))
@@ -41,7 +43,7 @@ def kaskada(branch_tag, branch_name):
     tree = fetch_tree('http://www.kaskadarestaurant.cz/denni_nabidky')
     menu = tree.xpath(
         '//div[@class="menuDen" and text()="%s"]/following-sibling::table'
-            % datetime.now().strftime('%A').upper()
+            % day.strftime('%A').upper()
         )[0]
     soup = menu.xpath(
         './/td[text() = "Polévka"]/following-sibling::td/text()')[0]
@@ -65,11 +67,12 @@ def kaskadaNK():
     return kaskada('Ostrava_Nova_Karolina', 'Kaskáda – Nová Karolina')
 
 def jetset():
-    tree = fetch_tree('http://www.jetsetostrava.cz/#poledni-nabidka')
-    menu = tree.xpath('//div[@id="poledni-nabidka"]')[0]
+    tree = fetch_tree('http://www.jetsetostrava.cz/tydenni-nabidka')
+    menu = tree.xpath('//div[@class="day" and ./h3/a/text() = "%s"]'
+                        % day.strftime('%A'))[0]
     soup = menu.xpath('p[1]/text()')[0]
     meals = menu.xpath('p[position()>1]/text()')
-    prices = menu.xpath('p[position()>1]/span[@class="cena"]/text()')
+    prices = menu.xpath('p[position()>1]/strong/text()')
 
     return {
         'name': 'Jet Set',
@@ -78,6 +81,11 @@ def jetset():
         }
 
 def tryFetchAll():
+    global day
+    day = datetime.now()
+    if day.hour >= 16:
+        day += timedelta(days=1)
+
     data = []
     for fetcher in [jetset, kaskadaNK, kaskadaF]:
         try:
@@ -93,6 +101,7 @@ def tryFetchAll():
 django.conf.settings.configure()
 
 HTML_TEMPLATE = """
+<h2>{{ day }}</h2>
 {% for rest in restaurants %}
     <h3>{{ rest.name }}</h3>
     <table style="width: 100%">
@@ -101,7 +110,7 @@ HTML_TEMPLATE = """
     {% for meal in rest.meals %}
         <tr>
             <td>{{ meal.name }}
-            <td style="text-align: right">{{ meal.price }}
+            <td style="text-align: right; white-space: nowrap;">{{ meal.price }}
     {% endfor %}
     {% for des in rest.desserts %}
         <tr>
@@ -141,9 +150,9 @@ class Tray:
         self.restaurants = tryFetchAll()
 
     def details(self, widget=None):
-        dialog = Gtk.Dialog("Menu", None, 0,
+        dialog = Gtk.Dialog('Menu', None, 0,
                             (Gtk.STOCK_OK, Gtk.ResponseType.OK))
-        dialog.set_size_request(1000, 500)
+        dialog.set_size_request(1000, 650)
 
         scroll = Gtk.ScrolledWindow()
         dialog.vbox.pack_start(scroll, True, True, 0)
@@ -152,7 +161,11 @@ class Tray:
         scroll.add(view)
 
         t = Template(HTML_TEMPLATE)
-        c = Context({"restaurants": self.restaurants})
+        global day
+        c = Context({
+            'restaurants': self.restaurants,
+            'day': day.strftime('%A'),
+            })
         view.load_html_string(t.render(c), '')
 
         dialog.show_all()
@@ -160,6 +173,6 @@ class Tray:
         dialog.destroy()
 
 
-if __name__ == "__main__":
+if __name__ == "__main__" and day.isoweekday() <= 5:
     Tray()
     Gtk.main()
