@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+import calendar
 from datetime import datetime, timedelta
 from lxml import etree
 import locale
@@ -141,19 +142,38 @@ class Tray:
                             (Gtk.STOCK_OK, Gtk.ResponseType.OK))
         dialog.set_size_request(1000, 650)
 
+        buttons = Gtk.Box()
+        dialog.vbox.pack_start(buttons, False, False, 5)
+        last_button = None
+        for day in range(0, 5):
+            button = Gtk.RadioButton(calendar.day_name[day], group=last_button)
+            buttons.pack_start(button, True, True, 5)
+            button.connect('toggled', self.day_chosen, day)
+            button.set_mode(False)  # so it looks like a toggle button
+            last_button = button
+
         scroll = Gtk.ScrolledWindow()
         dialog.vbox.pack_start(scroll, True, True, 0)
 
-        view = WebKit.WebView()
-        scroll.add(view)
+        self.view = WebKit.WebView()
+        scroll.add(self.view)
 
-        t = Template(HTML_TEMPLATE)
-        html = t.render(restaurants=self.restaurants, day=3)  # example
-        view.load_html_string(html, '')
+        try:
+            buttons.get_children()[datetime.today().weekday()].set_active(True)
+        except IndexError:
+            last_button.set_active(True)
 
         dialog.show_all()
         dialog.run()
         dialog.destroy()
+
+    def render_day(self, day):
+        t = Template(HTML_TEMPLATE)
+        html = t.render(restaurants=self.restaurants, day=day)
+        self.view.load_html_string(html, '')
+
+    def day_chosen(self, button, day):
+        self.render_day(day)
 
 
 if __name__ == "__main__":
