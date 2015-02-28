@@ -178,11 +178,11 @@ class Tray(Gtk.StatusIcon):
 
         self.menu = Gtk.Menu()
 
-        fetchItem = Gtk.MenuItem('Fetch')
+        fetchItem = Gtk.MenuItem('Aktualizovat')
         self.menu.append(fetchItem)
         fetchItem.connect('activate', self.fetch)
 
-        quitItem = Gtk.MenuItem('Quit')
+        quitItem = Gtk.MenuItem('Ukončit')
         self.menu.append(quitItem)
         quitItem.connect('activate', Gtk.main_quit)
 
@@ -205,6 +205,7 @@ class Window(Gtk.Window):
     def __init__(self):
         Gtk.Window.__init__(self, title=APP_TITLE)
         self.set_default_icon_from_file(APP_ICON)
+        self.maximize()
         self.connect('delete-event', lambda w, e: w.hide() or True)
 
         self.vbox = Gtk.VBox()
