@@ -8,8 +8,7 @@ from urllib.request import urlopen, build_opener, HTTPCookieProcessor
 from http.cookiejar import CookieJar
 
 from gi.repository import Gtk, WebKit
-from django.template import Context, Template
-import django.conf
+from jinja2 import Template
 
 ICONS_DIR = '/usr/share/pixmaps/pidgin/emotes/default/'
 
@@ -95,14 +94,11 @@ def tryFetchAll():
 ##############################################################################
 # GUI:
 
-django.conf.settings.configure()
-
-# day = 3 as an example
 HTML_TEMPLATE = """
 {% for rest in restaurants %}
     <h3>{{ rest.name }}</h3>
     <table style="width: 100%">
-    {% for meal in rest.meals.3 %}
+    {% for meal in rest.meals[day] %}
         <tr>
             <td>{{ meal.name }}
             <td style="text-align: right; white-space: nowrap;">{{ meal.price }}
@@ -152,8 +148,8 @@ class Tray:
         scroll.add(view)
 
         t = Template(HTML_TEMPLATE)
-        c = Context({'restaurants': self.restaurants})
-        view.load_html_string(t.render(c), '')
+        html = t.render(restaurants=self.restaurants, day=3)  # example
+        view.load_html_string(html, '')
 
         dialog.show_all()
         dialog.run()
