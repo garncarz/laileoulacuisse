@@ -12,6 +12,8 @@ from gi.repository import Gtk, WebKit
 from jinja2 import Template
 
 ICONS_DIR = '/usr/share/pixmaps/pidgin/emotes/default/'
+APP_TITLE = 'Menu'
+APP_ICON = '%s/pizza.png' % ICONS_DIR
 
 locale.setlocale(locale.LC_ALL, 'cs_CZ')
 
@@ -108,64 +110,71 @@ HTML_TEMPLATE = """
 {% endfor %}
 """
 
-class Tray:
+class Tray(Gtk.StatusIcon):
     def __init__(self):
-        self.statusicon = Gtk.StatusIcon()
-        self.statusicon.set_tooltip_text('Jídlo')
-        self.statusicon.set_from_file('%s/pizza.png' % ICONS_DIR)
-        self.statusicon.connect('popup-menu', self.menu)
-        self.statusicon.connect('activate', self.details)
+        Gtk.StatusIcon.__init__(self)
+        self.set_tooltip_text(APP_TITLE)
+        self.set_from_file(APP_ICON)
+        self.connect('popup-menu', self.menu)
+        self.connect('activate', self.details)
 
         self.menu = Gtk.Menu()
 
-        fetchItem = Gtk.MenuItem()
+        fetchItem = Gtk.MenuItem('Fetch')
         self.menu.append(fetchItem)
-        fetchItem.set_label('Fetch')
         fetchItem.connect('activate', self.fetch)
 
-        quitItem = Gtk.MenuItem()
+        quitItem = Gtk.MenuItem('Quit')
         self.menu.append(quitItem)
-        quitItem.set_label('Quit')
         quitItem.connect('activate', Gtk.main_quit)
 
-        self.fetch()
+        self.window = Window()
 
     def menu(self, icon, button, time):
         self.menu.show_all()
         self.menu.popup(None, None, None, None, button, time)
 
     def fetch(self, widget=None):
-        self.restaurants = tryFetchAll()
+        self.window.push(tryFetchAll())
 
     def details(self, widget=None):
-        dialog = Gtk.Dialog('Menu', None, 0,
-                            (Gtk.STOCK_OK, Gtk.ResponseType.OK))
-        dialog.set_size_request(1000, 650)
+        if self.window.get_property('visible'):
+            self.window.hide()
+        else:
+            self.window.show_all()
 
-        buttons = Gtk.Box()
-        dialog.vbox.pack_start(buttons, False, False, 5)
+class Window(Gtk.Window):
+    def __init__(self):
+        Gtk.Window.__init__(self, title=APP_TITLE)
+        self.set_default_icon_from_file(APP_ICON)
+        self.connect('delete-event', lambda w, e: w.hide() or True)
+
+        self.vbox = Gtk.VBox()
+        self.add(self.vbox)
+
+        self.buttons = Gtk.HBox()
+        self.vbox.pack_start(self.buttons, False, False, 5)
         last_button = None
         for day in range(0, 5):
             button = Gtk.RadioButton(calendar.day_name[day], group=last_button)
-            buttons.pack_start(button, True, True, 5)
+            self.buttons.pack_start(button, True, True, 5)
             button.connect('toggled', self.day_chosen, day)
             button.set_mode(False)  # so it looks like a toggle button
             last_button = button
 
         scroll = Gtk.ScrolledWindow()
-        dialog.vbox.pack_start(scroll, True, True, 0)
+        self.vbox.pack_start(scroll, True, True, 0)
 
         self.view = WebKit.WebView()
         scroll.add(self.view)
 
+    def push(self, restaurants):
+        self.restaurants = restaurants
+        buttons = self.buttons.get_children()
         try:
-            buttons.get_children()[datetime.today().weekday()].set_active(True)
+            buttons[datetime.today().weekday()].set_active(True)
         except IndexError:
-            last_button.set_active(True)
-
-        dialog.show_all()
-        dialog.run()
-        dialog.destroy()
+            buttons[-1].set_active(True)
 
     def render_day(self, day):
         t = Template(HTML_TEMPLATE)
@@ -177,5 +186,5 @@ class Tray:
 
 
 if __name__ == "__main__":
-    Tray()
+    Tray().fetch()
     Gtk.main()
