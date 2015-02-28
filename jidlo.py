@@ -4,8 +4,10 @@ import calendar
 from datetime import datetime, timedelta
 from lxml import etree
 import locale
+import os
 import re
 from urllib.request import urlopen, build_opener, HTTPCookieProcessor
+import subprocess
 from http.cookiejar import CookieJar
 
 from gi.repository import Gtk, WebKit
@@ -35,9 +37,10 @@ def merge_meals_prices(meals, prices):
     return list(map(lambda m: {'name': m[0], 'price': m[1]},
                     zip(meals, prices)))
 
+
 def kaskada(branch_tag, branch_name):
     def price(price):
-        m = re.match(r'.* (?P<wo>\d+ Kč).* (?P<w>\d+ Kč)', price)
+        m = re.match(r'.*?(?P<wo>\d+ Kč).*?(?P<w>\d+ Kč)', price)
         return price if not m \
           else '%s / %s' % (m.group('wo'), m.group('w'))
 
@@ -94,6 +97,50 @@ def pajonk():
     meals[day] = list(map(meal_dict, day_meals))
 
     return {'name': 'Pajonk', 'meals': meals}
+
+def verona():
+    def day_meal(meal):
+        return [{'name': meal, 'price': price},
+                {'name': whole_week_meal, 'price': price}]
+
+    tmpfile = '/tmp/verona.doc'
+
+    response = opener.open(
+        'http://cms.netnews.cz/files/attachments/355/1955-Verona-Menu.doc')
+    with open(tmpfile, 'wb') as f:
+        f.write(response.readall())
+
+    env = dict(os.environ)
+    env['LANG'] = 'cs_CZ.UTF-8'
+    p = subprocess.Popen(['antiword', '-x', 'db', tmpfile],
+                         stdout=subprocess.PIPE,
+                         env=env)
+    out, _ = p.communicate()
+
+    first_day = datetime.now() - timedelta(days=datetime.today().weekday())
+    week = [first_day + timedelta(days=days) for days in range(5)]
+
+    tree = etree.fromstring(out)
+    price = re.search(
+        r'.*?(?P<price>\d+ Kč).*',
+        tree.xpath('//para/emphasis[contains(., "Kč")]/text()')[0]) \
+        .group('price')
+    menu = tree.xpath('//sect1[./para[contains(., "%s")]]'
+                        % first_day.strftime('%-d.%-m.'))[0]
+    whole_week_meal = ''.join(
+        menu.xpath(
+            './para[position() = last()]/descendant-or-self::*/text()'
+        )).strip()
+    meals = []
+    for day in week:
+        meal = ''.join(
+            menu.xpath('./para[contains(., "%s")]/descendant-or-self::*/text()'
+                        % day.strftime('%-d.%-m.')
+            )).split('–', 1)[1].strip()
+        meals += [day_meal(meal)]
+
+    return {'name': 'Verona', 'meals': meals}
+
 
 def tryFetchAll():
     data = []
