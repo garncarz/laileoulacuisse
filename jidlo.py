@@ -18,8 +18,6 @@ locale.setlocale(locale.LC_ALL, 'cs_CZ')
 ##############################################################################
 # FETCHING:
 
-day = datetime.now()
-
 cj = CookieJar()
 opener = build_opener(HTTPCookieProcessor(cj))
 
@@ -34,6 +32,9 @@ def kaskada_price(price):
         return price
     return '%s / %s' % (m.group('wo'), m.group('w'))
 
+def meals_dict(meals):
+    return list(map(lambda m: {'name': m}, list(meals)))
+
 def merge_meals_prices(meals, prices):
     return list(map(lambda m: {'name': m[0], 'price': m[1]},
                     zip(meals, prices)))
@@ -41,23 +42,24 @@ def merge_meals_prices(meals, prices):
 def kaskada(branch_tag, branch_name):
     opener.open('http://www.kaskadarestaurant.cz/%s' % branch_tag)
     tree = fetch_tree('http://www.kaskadarestaurant.cz/denni_nabidky')
-    menu = tree.xpath(
-        '//div[@class="menuDen" and text()="%s"]/following-sibling::table'
-            % day.strftime('%A').upper()
-        )[0]
-    soup = menu.xpath(
-        './/td[text() = "Polévka"]/following-sibling::td/text()')[0]
-    meals = menu.xpath(
-        './/td[text() = "Hlavní chod"]/following-sibling::td/b/text()')
-    prices = map(kaskada_price,
-               menu.xpath('.//td[@class="cena"]/b/text()')[:-1:2])
-    desserts = set(menu.xpath(
-        './/td[text() = "Dezert"]/following-sibling::td/text()'))
+    menus = tree.xpath('//div[@class="menuDen"]/following-sibling::table')
+    meals = []
+    for menu in menus:
+        soups = set(menu.xpath(
+            './/td[text() = "Polévka"]/following-sibling::td/text()'))
+        mains = menu.xpath(
+            './/td[text() = "Hlavní chod"]/following-sibling::td/b/text()')
+        prices = map(kaskada_price,
+                     menu.xpath('.//td[@class="cena"]/b/text()')[:-1:2])
+        desserts = set(menu.xpath('''
+            .//td[text() = "Dezert" or text() = "Kompot"]
+                /following-sibling::td/text()
+            '''))
+        meals += [meals_dict(soups) + merge_meals_prices(mains, prices) +
+                  meals_dict(desserts)]
     return {
         'name': branch_name,
-        'soup': soup,
-        'meals': merge_meals_prices(meals, prices),
-        'desserts': desserts,
+        'meals': meals,
         }
 
 def kaskadaF():
@@ -68,24 +70,19 @@ def kaskadaNK():
 
 def jetset():
     tree = fetch_tree('http://www.jetsetostrava.cz/tydenni-nabidka')
-    menu = tree.xpath('//div[@class="day" and ./h3/a/text() = "%s"]'
-                        % day.strftime('%A'))[0]
-    soup = menu.xpath('p[1]/text()')[0]
-    meals = menu.xpath('p[position()>1]/text()')
-    prices = menu.xpath('p[position()>1]/strong/text()')
-
+    menus = tree.xpath('//div[@class="day"]')
+    meals = []
+    for menu in menus:
+        soup = menu.xpath('p[1]/text()')
+        mains = menu.xpath('p[position()>1]/text()')
+        prices = menu.xpath('p[position()>1]/strong/text()')
+        meals += [meals_dict(soup) + merge_meals_prices(mains, prices)]
     return {
         'name': 'Jet Set',
-        'soup': soup,
-        'meals': merge_meals_prices(meals, prices),
+        'meals': meals,
         }
 
 def tryFetchAll():
-    global day
-    day = datetime.now()
-    if day.hour >= 16:
-        day += timedelta(days=1)
-
     data = []
     for fetcher in [jetset, kaskadaNK, kaskadaF]:
         try:
@@ -100,21 +97,15 @@ def tryFetchAll():
 
 django.conf.settings.configure()
 
+# day = 3 as an example
 HTML_TEMPLATE = """
-<h2>{{ day }}</h2>
 {% for rest in restaurants %}
     <h3>{{ rest.name }}</h3>
     <table style="width: 100%">
-        <tr>
-            <td>{{ rest.soup }}
-    {% for meal in rest.meals %}
+    {% for meal in rest.meals.3 %}
         <tr>
             <td>{{ meal.name }}
             <td style="text-align: right; white-space: nowrap;">{{ meal.price }}
-    {% endfor %}
-    {% for des in rest.desserts %}
-        <tr>
-            <td>{{ des }}
     {% endfor %}
     </table>
 {% endfor %}
@@ -161,11 +152,7 @@ class Tray:
         scroll.add(view)
 
         t = Template(HTML_TEMPLATE)
-        global day
-        c = Context({
-            'restaurants': self.restaurants,
-            'day': day.strftime('%A'),
-            })
+        c = Context({'restaurants': self.restaurants})
         view.load_html_string(t.render(c), '')
 
         dialog.show_all()
@@ -173,6 +160,6 @@ class Tray:
         dialog.destroy()
 
 
-if __name__ == "__main__" and day.isoweekday() <= 5:
+if __name__ == "__main__":
     Tray()
     Gtk.main()
