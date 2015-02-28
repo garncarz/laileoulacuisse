@@ -8,6 +8,7 @@ import os
 import re
 from urllib.request import urlopen, build_opener, HTTPCookieProcessor
 import subprocess
+import uuid
 from http.cookiejar import CookieJar
 
 from gi.repository import Gtk, WebKit
@@ -103,7 +104,7 @@ def verona():
         return [{'name': meal, 'price': price},
                 {'name': whole_week_meal, 'price': price}]
 
-    tmpfile = '/tmp/verona.doc'
+    tmpfile = '/tmp/verona-%s.doc' % uuid.uuid4()
 
     response = opener.open(
         'http://cms.netnews.cz/files/attachments/355/1955-Verona-Menu.doc')
