@@ -3,45 +3,17 @@
 import calendar
 from datetime import datetime, timedelta
 from gi.repository import Gtk, WebKit
-import inspect
 import locale
 import os
-from pluginbase import PluginBase
 from jinja2 import Template
 
-from fetcher import Fetcher
+import fetcher
 
 ICONS_DIR = '/usr/share/pixmaps/pidgin/emotes/default/'
 APP_TITLE = "Křidýlko nebo stehýnko"
-APP_ICON = '%s/pizza.png' % ICONS_DIR
+APP_ICON = os.path.join(ICONS_DIR, 'pizza.png')
 
 locale.setlocale(locale.LC_ALL, 'cs_CZ')
-
-abs_path = lambda path: os.path.join(os.path.dirname(
-    os.path.realpath(__file__)), path)
-plugin_base = PluginBase(package='laileoulacuisse')
-plugin_source = plugin_base.make_plugin_source(
-    searchpath=[abs_path('./fetchers')])
-
-fetchers = []
-for plugin_name in plugin_source.list_plugins():
-    plugin = plugin_source.load_plugin(plugin_name)
-    fetchers += map(lambda f: f[1](),
-                    inspect.getmembers(
-                        plugin,
-                        lambda m: inspect.isclass(m) and
-                                  issubclass(m, Fetcher) and
-                                  not inspect.isabstract(m)))
-
-def tryFetchAll():
-    data = []
-    for fetcher in fetchers:
-        try:
-            data += [{'name': fetcher.name, 'meals': fetcher.fetch()}]
-        except Exception as e:
-            pass
-    return data
-
 
 HTML_TEMPLATE = """
 {% for rest in restaurants %}
@@ -66,9 +38,9 @@ class Tray(Gtk.StatusIcon):
 
         self.menu = Gtk.Menu()
 
-        fetchItem = Gtk.MenuItem('Aktualizovat')
-        self.menu.append(fetchItem)
-        fetchItem.connect('activate', self.fetch)
+        updateItem = Gtk.MenuItem('Aktualizovat')
+        self.menu.append(updateItem)
+        updateItem.connect('activate', self.update)
 
         quitItem = Gtk.MenuItem('Ukončit')
         self.menu.append(quitItem)
@@ -80,8 +52,12 @@ class Tray(Gtk.StatusIcon):
         self.menu.show_all()
         self.menu.popup(None, None, None, None, button, time)
 
-    def fetch(self, widget=None):
-        self.window.push(tryFetchAll())
+    def update(self, widget=None):
+        fetcher.reload_fetchers()
+        data, errors = fetcher.tryFetchAll()
+        if errors:
+            print(errors)
+        self.window.push(data)
 
     def details(self, widget=None):
         if self.window.get_property('visible'):
@@ -120,6 +96,8 @@ class Window(Gtk.Window):
         buttons = self.buttons.get_children()
         try:
             buttons[datetime.today().weekday()].set_active(True)
+            if datetime.today().weekday() == 0:
+                buttons[0].toggled()  # unfortunately needs to be done
         except IndexError:
             buttons[-1].set_active(True)
 
@@ -133,5 +111,5 @@ class Window(Gtk.Window):
 
 
 if __name__ == "__main__":
-    Tray().fetch()
+    Tray().update()
     Gtk.main()
