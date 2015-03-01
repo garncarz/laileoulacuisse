@@ -18,7 +18,9 @@ class Verona(Fetcher):
         tmpfile = '/tmp/verona-%s.doc' % uuid.uuid4()
 
         response = self.urlopen(
-            'http://cms.netnews.cz/files/attachments/355/1955-Verona-Menu.doc')
+                    self.urlopen_tree('http://verona.pribor.cz') \
+                        .xpath('//a[contains(., "Denní menu")]/@href')[0]
+                    )
         with open(tmpfile, 'wb') as f:
             f.write(response.readall())
 
@@ -41,15 +43,15 @@ class Verona(Fetcher):
                             % first_day.strftime('%-d.%-m.'))[0]
         whole_week_meal = ''.join(
             menu.xpath(
-                './para[position() = last()]/descendant-or-self::*/text()'
+                './para[position() > 5]/descendant-or-self::*/text()'
             )).strip()
         meals = []
         for day in week:
-            meal = ''.join(
+            meal = re.split('–|-', ''.join(
                 menu.xpath(
                     './para[contains(., "%s")]/descendant-or-self::*/text()'
                         % day.strftime('%-d.%-m.')
-                )).split('–', 1)[1].strip()
+                )), 1)[-1].strip()
             meals += [day_meals(meal)]
 
         return meals
