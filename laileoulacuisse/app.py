@@ -3,10 +3,13 @@
 import calendar
 from datetime import datetime, timedelta
 from gi.repository import Gtk, WebKit
+import inspect
 import locale
 import os
 from pluginbase import PluginBase
 from jinja2 import Template
+
+from fetcher import Fetcher
 
 ICONS_DIR = '/usr/share/pixmaps/pidgin/emotes/default/'
 APP_TITLE = "Křidýlko nebo stehýnko"
@@ -23,15 +26,18 @@ plugin_source = plugin_base.make_plugin_source(
 fetchers = []
 for plugin_name in plugin_source.list_plugins():
     plugin = plugin_source.load_plugin(plugin_name)
-    fetchers += list(map(lambda f: getattr(plugin, f),
-                         filter(lambda f: f.startswith('fetch'),
-                                dir(plugin))))
+    fetchers += map(lambda f: f[1](),
+                    inspect.getmembers(
+                        plugin,
+                        lambda m: inspect.isclass(m) and
+                                  issubclass(m, Fetcher) and
+                                  not inspect.isabstract(m)))
 
 def tryFetchAll():
     data = []
     for fetcher in fetchers:
         try:
-            data += [fetcher()]
+            data += [{'name': fetcher.name, 'meals': fetcher.fetch()}]
         except Exception as e:
             pass
     return data
