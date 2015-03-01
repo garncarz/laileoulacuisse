@@ -14,8 +14,8 @@ APP_ICON = '%s/pizza.png' % ICONS_DIR
 
 locale.setlocale(locale.LC_ALL, 'cs_CZ')
 
-abs_path = lambda path: os.path.join(os.path.abspath(os.path.dirname(__file__)),
-                                     path)
+abs_path = lambda path: os.path.join(os.path.dirname(
+    os.path.realpath(__file__)), path)
 plugin_base = PluginBase(package='laileoulacuisse')
 plugin_source = plugin_base.make_plugin_source(
     searchpath=[abs_path('./fetchers')])
@@ -33,7 +33,7 @@ def tryFetchAll():
         try:
             data += [fetcher()]
         except Exception as e:
-            raise e
+            pass
     return data
 
 
