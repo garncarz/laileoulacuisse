@@ -62,7 +62,7 @@ class Tray(Gtk.StatusIcon):
         if reload_fetchers:
             fetcher.reload_fetchers()
             self.options_dialog = None
-        data, errors = fetcher.tryFetchAll()
+        data, errors = fetcher.try_fetch_all()
         if errors:
             print(errors)
         self.window.push(data)
@@ -133,22 +133,17 @@ class OptionsDialog(Gtk.Dialog):
                              Gtk.STOCK_OK, Gtk.ResponseType.OK))
         box = self.get_content_area()
 
-        self.states = [False] * len(fetcher.fetchers)
-        for i, f in enumerate(fetcher.fetchers):
-            self.states[i] = f.enabled
-            check = Gtk.CheckButton(f.name)
+        self.checks = {}
+        for f in fetcher.fetchers:
+            check = self.checks[f] = Gtk.CheckButton(f.name)
             check.set_active(f.enabled)
             box.add(check)
-            check.connect('toggled', self.state_toggled, i)
 
         self.show_all()
 
-    def state_toggled(self, button, i):
-        self.states[i] = button.get_active()
-
     def apply_states(self):
-        for i, f in enumerate(fetcher.fetchers):
-            f.enabled = self.states[i]
+        for f in fetcher.fetchers:
+            f.enabled = self.checks[f].get_active()
 
 
 if __name__ == "__main__":

@@ -53,7 +53,7 @@ def reload_fetchers():
                                       issubclass(m, Fetcher) and
                                       not inspect.isabstract(m)))
 
-def tryFetchAll():
+def try_fetch_all():
     data, errors = [], []
     for fetcher in filter(lambda f: f.enabled, fetchers):
         try:
