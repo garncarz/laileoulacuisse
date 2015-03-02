@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import calendar
+import configparser
 from datetime import datetime, timedelta
 from gi.repository import Gtk, WebKit
 import locale
@@ -12,6 +13,28 @@ import fetcher
 ICONS_DIR = '/usr/share/pixmaps/pidgin/emotes/default/'
 APP_TITLE = "Křidýlko nebo stehýnko"
 APP_ICON = os.path.join(ICONS_DIR, 'pizza.png')
+CONFIG_FILE = os.path.expanduser('~/.laileoulacuisse')
+
+class Config(configparser.ConfigParser):
+    def __init__(self):
+        configparser.ConfigParser.__init__(self)
+        self['restaurants'] = {}
+
+    def load(self):
+        self.read(CONFIG_FILE)
+
+    def save(self):
+        with open(CONFIG_FILE, 'w') as f:
+            self.write(f)
+
+    def is_enabled(self, fetcher):
+        return self['restaurants'].getboolean(fetcher.id) or True
+
+    def set_enabled(self, fetcher, enabled):
+        self['restaurants'][fetcher.id] = '%d' % enabled
+
+config = Config()
+config.load()
 
 locale.setlocale(locale.LC_ALL, 'cs_CZ')
 
@@ -29,8 +52,6 @@ HTML_TEMPLATE = """
 """
 
 class Tray(Gtk.StatusIcon):
-    options_dialog = None
-
     def __init__(self):
         Gtk.StatusIcon.__init__(self)
         self.set_tooltip_text(APP_TITLE)
@@ -61,20 +82,17 @@ class Tray(Gtk.StatusIcon):
     def update(self, widget=None, reload_fetchers=True):
         if reload_fetchers:
             fetcher.reload_fetchers()
-            self.options_dialog = None
-        data, errors = fetcher.try_fetch_all()
+        data, errors = fetcher.try_fetch_all(config)
         if errors:
             print(errors)
         self.window.push(data)
 
     def edit_options(self, widget=None):
-        if not self.options_dialog:
-            self.options_dialog = OptionsDialog()
-        response = self.options_dialog.run()
-        self.options_dialog.hide()
-        if response == Gtk.ResponseType.OK:
-            self.options_dialog.apply_states()
+        dialog = OptionsDialog()
+        if dialog.run() == Gtk.ResponseType.OK:
+            dialog.save()
             self.update(reload_fetchers=False)
+        dialog.destroy()
 
     def details(self, widget=None):
         if self.window.get_property('visible'):
@@ -136,14 +154,15 @@ class OptionsDialog(Gtk.Dialog):
         self.checks = {}
         for f in fetcher.fetchers:
             check = self.checks[f] = Gtk.CheckButton(f.name)
-            check.set_active(f.enabled)
+            check.set_active(config.is_enabled(f))
             box.add(check)
 
         self.show_all()
 
-    def apply_states(self):
+    def save(self):
         for f in fetcher.fetchers:
-            f.enabled = self.checks[f].get_active()
+            config.set_enabled(f, self.checks[f].get_active())
+        config.save()
 
 
 if __name__ == "__main__":
