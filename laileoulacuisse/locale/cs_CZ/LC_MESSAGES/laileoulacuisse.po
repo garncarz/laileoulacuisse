@@ -1,0 +1,22 @@
+#, fuzzy
+msgid ""
+msgstr ""
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: app.py:20
+msgid "The Wing or the Thigh"
+msgstr "Křidýlko nebo stehýnko"
+
+#: app.py:68
+msgid "Update"
+msgstr "Aktualizovat"
+
+#: app.py:72 app.py:153
+msgid "Options"
+msgstr "Možnosti"
+
+#: app.py:76
+msgid "Quit"
+msgstr "Ukončit"

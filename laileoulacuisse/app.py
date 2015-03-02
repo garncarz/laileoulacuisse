@@ -3,17 +3,20 @@
 import calendar
 import configparser
 from datetime import datetime, timedelta
+import gettext
 from gi.repository import Gtk, WebKit
-import locale
 import os
 from jinja2 import Template
 
 import fetcher
 
 ICONS_DIR = '/usr/share/pixmaps/pidgin/emotes/default/'
-APP_TITLE = "Křidýlko nebo stehýnko"
+APP_NAME = 'laileoulacuisse'
 APP_ICON = os.path.join(ICONS_DIR, 'pizza.png')
 CONFIG_FILE = os.path.expanduser('~/.laileoulacuisse')
+
+gettext.install(APP_NAME, fetcher.abs_path('locale'))
+APP_TITLE = _('The Wing or the Thigh')
 
 class Config(configparser.ConfigParser):
     def __init__(self):
@@ -28,7 +31,7 @@ class Config(configparser.ConfigParser):
             self.write(f)
 
     def is_enabled(self, fetcher):
-        return self['restaurants'].getboolean(fetcher.id) or True
+        return True if self['restaurants'].getboolean(fetcher.id) else False
 
     def set_enabled(self, fetcher, enabled):
         self['restaurants'][fetcher.id] = '%d' % enabled
@@ -36,7 +39,6 @@ class Config(configparser.ConfigParser):
 config = Config()
 config.load()
 
-locale.setlocale(locale.LC_ALL, 'cs_CZ')
 
 HTML_TEMPLATE = """
 {% for rest in restaurants %}
@@ -61,15 +63,15 @@ class Tray(Gtk.StatusIcon):
 
         self.menu = Gtk.Menu()
 
-        updateItem = Gtk.MenuItem('Aktualizovat')
+        updateItem = Gtk.MenuItem(_('Update'))
         self.menu.append(updateItem)
         updateItem.connect('activate', self.update)
 
-        optionsItem = Gtk.MenuItem('Možnosti')
+        optionsItem = Gtk.MenuItem(_('Options'))
         self.menu.append(optionsItem)
         optionsItem.connect('activate', self.edit_options)
 
-        quitItem = Gtk.MenuItem('Ukončit')
+        quitItem = Gtk.MenuItem(_('Quit'))
         self.menu.append(quitItem)
         quitItem.connect('activate', Gtk.main_quit)
 
@@ -146,7 +148,7 @@ class Window(Gtk.Window):
 
 class OptionsDialog(Gtk.Dialog):
     def __init__(self):
-        Gtk.Dialog.__init__(self, 'Možnosti', None, 0,
+        Gtk.Dialog.__init__(self, _('Options'), None, 0,
                             (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
                              Gtk.STOCK_OK, Gtk.ResponseType.OK))
         box = self.get_content_area()
