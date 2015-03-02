@@ -28,11 +28,14 @@ class Fetcher(metaclass=ABCMeta):
         data = response.readall().decode('utf8').replace('\r\n', '')
         return etree.fromstring(data, parser=etree.HTMLParser())
 
+    def not_upper(self, str):
+        return str.lower() if str.isupper() else str
+
     def dict_meals(self, meals):
-        return list(map(lambda m: {'name': m}, list(meals)))
+        return list(map(lambda m: {'name': self.not_upper(m)}, list(meals)))
 
     def dict_meals_prices(self, meals, prices):
-        return list(map(lambda m: {'name': m[0], 'price': m[1]},
+        return list(map(lambda m: {'name': self.not_upper(m[0]), 'price': m[1]},
                         zip(meals, prices)))
 
 

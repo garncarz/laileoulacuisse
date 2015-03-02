@@ -8,7 +8,7 @@ class Pajonk(Fetcher):
 
     def fetch(self):
         def dict_meal(meal):
-            m = re.match(r'(?P<name>.*) (?P<price>\d+),-', meal)
+            m = re.match(r'(?P<name>.*) (?P<price>\d+) *(,-|Kč)', meal)
             return {'name': meal} if not m \
               else {'name': m.group('name'),
                     'price': '%s Kč' % m.group('price')}
