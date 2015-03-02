@@ -3,7 +3,7 @@ from lxml import etree
 import os
 import re
 import subprocess
-import uuid
+import tempfile
 
 from laileoulacuisse.fetcher import Fetcher
 
@@ -15,21 +15,20 @@ class Verona(Fetcher):
             return [{'name': meal, 'price': price},
                     {'name': whole_week_meal, 'price': price}]
 
-        tmpfile = '/tmp/verona-%s.doc' % uuid.uuid4()
-
         response = self.urlopen(
                     self.urlopen_tree('http://verona.pribor.cz') \
                         .xpath('//a[contains(., "Denní menu")]/@href')[0]
                     )
-        with open(tmpfile, 'wb') as f:
-            f.write(response.readall())
+        tmpfile = tempfile.NamedTemporaryFile()
+        tmpfile.write(response.readall())
 
         env = dict(os.environ)
         env['LANG'] = 'cs_CZ.UTF-8'
-        p = subprocess.Popen(['antiword', '-x', 'db', tmpfile],
+        p = subprocess.Popen(['antiword', '-x', 'db', tmpfile.name],
                              stdout=subprocess.PIPE,
                              env=env)
         out, _ = p.communicate()
+        tmpfile.close()
 
         first_day = datetime.now() - timedelta(days=datetime.today().weekday())
         week = [first_day + timedelta(days=days) for days in range(5)]

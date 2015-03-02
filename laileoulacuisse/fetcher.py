@@ -29,7 +29,7 @@ class Fetcher(metaclass=ABCMeta):
         return etree.fromstring(data, parser=etree.HTMLParser())
 
     def not_upper(self, str):
-        return str.lower() if str.isupper() else str
+        return str.capitalize() if str.isupper() else str
 
     def dict_meals(self, meals):
         return list(map(lambda m: {'name': self.not_upper(m)}, list(meals)))
