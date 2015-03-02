@@ -1,7 +1,7 @@
 import calendar
 import re
 
-from fetcher import Fetcher
+from laileoulacuisse.fetcher import Fetcher
 
 class Pajonk(Fetcher):
     name = 'Pajonk'

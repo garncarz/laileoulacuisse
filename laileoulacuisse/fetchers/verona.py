@@ -5,7 +5,7 @@ import re
 import subprocess
 import uuid
 
-from fetcher import Fetcher
+from laileoulacuisse.fetcher import Fetcher
 
 class Verona(Fetcher):
     name = 'Verona'

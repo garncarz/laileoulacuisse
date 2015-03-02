@@ -1,4 +1,4 @@
-from fetcher import Fetcher
+from laileoulacuisse.fetcher import Fetcher
 
 class JetSet(Fetcher):
     name = 'Jet Set'

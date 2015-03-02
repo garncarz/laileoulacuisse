@@ -1,7 +1,7 @@
 from abc import abstractmethod
 import re
 
-from fetcher import Fetcher
+from laileoulacuisse.fetcher import Fetcher
 
 class Kaskada(Fetcher):
     @abstractmethod

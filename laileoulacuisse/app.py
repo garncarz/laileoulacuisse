@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import calendar
 import configparser
 from datetime import datetime, timedelta
@@ -8,7 +6,7 @@ from gi.repository import Gtk, WebKit
 import os
 from jinja2 import Template
 
-import fetcher
+from laileoulacuisse import fetcher
 
 ICONS_DIR = '/usr/share/pixmaps/pidgin/emotes/default/'
 APP_NAME = 'laileoulacuisse'
@@ -167,6 +165,6 @@ class OptionsDialog(Gtk.Dialog):
         config.save()
 
 
-if __name__ == "__main__":
+def run():
     Tray().update()
     Gtk.main()
