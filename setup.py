@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from distutils.core import setup
+from DistUtilsExtra.auto import setup
 
 setup(
     name='laileoulacuisse',

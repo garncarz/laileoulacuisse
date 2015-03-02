@@ -13,7 +13,13 @@ APP_NAME = 'laileoulacuisse'
 APP_ICON = os.path.join(ICONS_DIR, 'pizza.png')
 CONFIG_FILE = os.path.expanduser('~/.laileoulacuisse')
 
-gettext.install(APP_NAME, fetcher.abs_path('locale'))
+gettext.install(APP_NAME)
+for locale_dir in ['../build/mo', '~/.local/share/locale']:
+    dir = fetcher.abs_path(os.path.expanduser(locale_dir))
+    if os.path.isdir(dir):
+        gettext.install(APP_NAME, dir)
+        break
+
 APP_TITLE = _('The Wing or the Thigh')
 
 class Config(configparser.ConfigParser):
