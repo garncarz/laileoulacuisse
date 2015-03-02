@@ -29,6 +29,8 @@ HTML_TEMPLATE = """
 """
 
 class Tray(Gtk.StatusIcon):
+    options_dialog = None
+
     def __init__(self):
         Gtk.StatusIcon.__init__(self)
         self.set_tooltip_text(APP_TITLE)
@@ -42,6 +44,10 @@ class Tray(Gtk.StatusIcon):
         self.menu.append(updateItem)
         updateItem.connect('activate', self.update)
 
+        optionsItem = Gtk.MenuItem('Možnosti')
+        self.menu.append(optionsItem)
+        optionsItem.connect('activate', self.edit_options)
+
         quitItem = Gtk.MenuItem('Ukončit')
         self.menu.append(quitItem)
         quitItem.connect('activate', Gtk.main_quit)
@@ -52,12 +58,23 @@ class Tray(Gtk.StatusIcon):
         self.menu.show_all()
         self.menu.popup(None, None, None, None, button, time)
 
-    def update(self, widget=None):
-        fetcher.reload_fetchers()
+    def update(self, widget=None, reload_fetchers=True):
+        if reload_fetchers:
+            fetcher.reload_fetchers()
+            self.options_dialog = None
         data, errors = fetcher.tryFetchAll()
         if errors:
             print(errors)
         self.window.push(data)
+
+    def edit_options(self, widget=None):
+        if not self.options_dialog:
+            self.options_dialog = OptionsDialog()
+        response = self.options_dialog.run()
+        self.options_dialog.hide()
+        if response == Gtk.ResponseType.OK:
+            self.options_dialog.apply_states()
+            self.update(reload_fetchers=False)
 
     def details(self, widget=None):
         if self.window.get_property('visible'):
@@ -108,6 +125,30 @@ class Window(Gtk.Window):
 
     def day_chosen(self, button, day):
         self.render_day(day)
+
+class OptionsDialog(Gtk.Dialog):
+    def __init__(self):
+        Gtk.Dialog.__init__(self, 'Možnosti', None, 0,
+                            (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+                             Gtk.STOCK_OK, Gtk.ResponseType.OK))
+        box = self.get_content_area()
+
+        self.states = [False] * len(fetcher.fetchers)
+        for i, f in enumerate(fetcher.fetchers):
+            self.states[i] = f.enabled
+            check = Gtk.CheckButton(f.name)
+            check.set_active(f.enabled)
+            box.add(check)
+            check.connect('toggled', self.state_toggled, i)
+
+        self.show_all()
+
+    def state_toggled(self, button, i):
+        self.states[i] = button.get_active()
+
+    def apply_states(self):
+        for i, f in enumerate(fetcher.fetchers):
+            f.enabled = self.states[i]
 
 
 if __name__ == "__main__":

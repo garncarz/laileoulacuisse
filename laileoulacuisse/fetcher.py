@@ -8,6 +8,8 @@ import os
 from pluginbase import PluginBase
 
 class Fetcher(metaclass=ABCMeta):
+    enabled = 1
+
     def __init__(self):
         self.cj = CookieJar()
         self.opener = build_opener(HTTPCookieProcessor(self.cj))
@@ -53,7 +55,7 @@ def reload_fetchers():
 
 def tryFetchAll():
     data, errors = [], []
-    for fetcher in fetchers:
+    for fetcher in filter(lambda f: f.enabled, fetchers):
         try:
             data += [{'name': fetcher.name, 'meals': fetcher.fetch()}]
         except Exception as e:
