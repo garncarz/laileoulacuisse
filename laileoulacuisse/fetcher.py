@@ -32,11 +32,14 @@ class Fetcher(metaclass=ABCMeta):
         return str.capitalize() if str.isupper() else str
 
     def dict_meals(self, meals):
-        return list(map(lambda m: {'name': self.not_upper(m)}, list(meals)))
+        return [{'name': self.not_upper(m)} for m in meals]
 
     def dict_meals_prices(self, meals, prices):
-        return list(map(lambda m: {'name': self.not_upper(m[0]), 'price': m[1]},
-                        zip(meals, prices)))
+        prices = list(prices)
+        return [{'name': self.not_upper(m), 'price': prices[i]}
+                        if i < len(prices)
+                        else {'name': self.not_upper(m)}
+                    for i, m in enumerate(meals)]
 
 
 abs_path = lambda path: os.path.join(os.path.dirname(
