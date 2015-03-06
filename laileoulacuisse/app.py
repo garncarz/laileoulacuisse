@@ -140,12 +140,15 @@ class Window(Gtk.Window):
     def push(self, restaurants):
         self.restaurants = restaurants
         buttons = self.buttons.get_children()
+        today = datetime.today().weekday()
         try:
-            buttons[datetime.today().weekday()].set_active(True)
-            if datetime.today().weekday() == 0:
-                buttons[0].toggled()  # unfortunately needs to be done
+            button = buttons[today]
         except IndexError:
-            buttons[-1].set_active(True)
+            button = buttons[-1]
+        if button.get_active():
+            self.render_day(today)  # manual refresh
+        else:
+            button.set_active(True)  # automatic refresh
 
     def render_day(self, day):
         t = Template(HTML_TEMPLATE)
