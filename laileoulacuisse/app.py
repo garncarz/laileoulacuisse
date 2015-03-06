@@ -2,16 +2,21 @@ import calendar
 import configparser
 from datetime import datetime, timedelta
 import gettext
-from gi.repository import Gtk, WebKit
+from gi.repository import Gtk, GLib, WebKit
 import os
 from jinja2 import Template
 
 from laileoulacuisse import fetcher
 
-ICONS_DIR = '/usr/share/pixmaps/pidgin/emotes/default/'
 APP_NAME = 'laileoulacuisse'
-APP_ICON = os.path.join(ICONS_DIR, 'pizza.png')
-CONFIG_FILE = os.path.expanduser('~/.laileoulacuisse')
+CONFIG_FILE = os.path.expanduser('~/.%s.conf' % APP_NAME)
+
+icon_loader = Gtk.IconTheme.get_default()
+icon_loader.append_search_path('data')
+try:
+    APP_ICON = icon_loader.load_icon(APP_NAME, 24, 0)
+except GLib.GError:
+    APP_ICON = icon_loader.load_icon('default', 24, 0)
 
 gettext.install(APP_NAME)
 for locale_dir in ['../build/mo', '~/.local/share/locale']:
@@ -61,7 +66,7 @@ class Tray(Gtk.StatusIcon):
     def __init__(self):
         Gtk.StatusIcon.__init__(self)
         self.set_tooltip_text(APP_TITLE)
-        self.set_from_file(APP_ICON)
+        self.set_from_gicon(APP_ICON)
         self.connect('popup-menu', self.menu)
         self.connect('activate', self.details)
 
@@ -109,7 +114,7 @@ class Tray(Gtk.StatusIcon):
 class Window(Gtk.Window):
     def __init__(self):
         Gtk.Window.__init__(self, title=APP_TITLE)
-        self.set_default_icon_from_file(APP_ICON)
+        self.set_default_icon(APP_ICON)
         self.maximize()
         self.connect('delete-event', lambda w, e: w.hide() or True)
 
