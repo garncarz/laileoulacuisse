@@ -8,7 +8,7 @@ setup(
     author='Ondřej Garncarz',
     author_email='ondrej@garncarz.cz',
     url='https://github.com/garncarz/laileoulacuisse',
-    license='MIT',
+    license='GPLv2',
 
     packages=['laileoulacuisse', 'laileoulacuisse.fetchers'],
     scripts=['bin/laileoulacuisse'],
