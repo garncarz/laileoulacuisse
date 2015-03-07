@@ -13,6 +13,10 @@ It is written in Python 3, GUI is powered by GTK+ 3.
 Then you can find the app in your applications menu (Internet section),
 or run it manually as `$ laileoulacuisse`.
 
+## Screenshot
+
+![Czech localization](https://garncarz.github.io/laileoulacuisse/screenshot.png)
+
 ## Under the hood
 
 Fetching algorithms are written as plugins in the `fetcher` directory.
