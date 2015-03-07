@@ -1,0 +1,4 @@
+include LICENSE AUTHORS
+recursive-include po *.po
+graft data
+prune packaging

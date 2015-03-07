@@ -1,0 +1,21 @@
+_pkgname=laileoulacuisse
+pkgname=python-$_pkgname
+pkgver=0.1.0
+pkgrel=1
+pkgdesc="Restaurants' menu watcher tray app"
+arch=(any)
+url='http://garncarz.github.io/laileoulacuisse'
+license=(GPL)
+depends=(python python-pluginbase python-lxml python-jinja python-gobject
+         gtk3 webkitgtk
+         desktop-file-utils gtk-update-icon-cache)
+makedepends=(python)
+optdepends=('antiword: parsing Word files')
+install=$_pkgname.install
+source=("https://github.com/garncarz/$_pkgname/archive/v$pkgver.tar.gz")
+sha256sums=(SKIP)
+
+package() {
+    cd $_pkgname-$pkgver
+    python setup.py install --root="$pkgdir/" --optimize=1
+}
