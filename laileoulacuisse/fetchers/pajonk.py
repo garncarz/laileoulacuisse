@@ -5,6 +5,7 @@ from laileoulacuisse.fetcher import Fetcher
 
 class Pajonk(Fetcher):
     name = 'Pajonk'
+    url = 'http://vinorestaurant.cz/den.php'
 
     def fetch(self):
         def dict_meal(meal):
@@ -13,7 +14,7 @@ class Pajonk(Fetcher):
               else {'name': m.group('name'),
                     'price': '%s Kč' % m.group('price')}
 
-        tree = self.urlopen_tree('http://vinorestaurant.cz/den.php')
+        tree = self.urlopen_tree(self.url)
         meals = [[]] * 5
 
         menu = tree.xpath(

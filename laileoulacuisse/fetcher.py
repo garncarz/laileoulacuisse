@@ -1,4 +1,4 @@
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta, abstractmethod, abstractproperty
 from urllib.request import build_opener, HTTPCookieProcessor
 from http.cookiejar import CookieJar
 from lxml import etree
@@ -15,6 +15,22 @@ class Fetcher(metaclass=ABCMeta):
     @property
     def id(self):
         return self.__class__.__name__
+
+    @abstractproperty
+    def name(self):
+        pass
+
+    @abstractproperty
+    def url(self):
+        pass
+
+    _meals = None
+
+    @property
+    def meals(self):
+        if not self._meals:
+            self._meals = self.fetch()
+        return self._meals
 
     @abstractmethod
     def fetch(self):
@@ -65,7 +81,8 @@ def try_fetch_all(config):
     data, errors = [], []
     for fetcher in filter(lambda f: config.is_enabled(f), fetchers):
         try:
-            data += [{'name': fetcher.name, 'meals': fetcher.fetch()}]
+            assert fetcher.meals is not None
+            data += [fetcher]
         except Exception as e:
             errors += [{'name': fetcher.name, 'error': e}]
     return (data, errors)

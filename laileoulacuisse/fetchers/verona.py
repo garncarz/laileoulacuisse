@@ -9,6 +9,7 @@ from laileoulacuisse.fetcher import Fetcher
 
 class Verona(Fetcher):
     name = 'Verona'
+    url = 'http://verona.pribor.cz'
 
     def fetch(self):
         def day_meals(meal):
@@ -16,7 +17,7 @@ class Verona(Fetcher):
                     {'name': whole_week_meal, 'price': price}]
 
         response = self.urlopen(
-                    self.urlopen_tree('http://verona.pribor.cz') \
+                    self.urlopen_tree(self.url) \
                         .xpath('//a[contains(., "Denní menu")]/@href')[0]
                     )
         tmpfile = tempfile.NamedTemporaryFile()

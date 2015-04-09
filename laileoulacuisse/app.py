@@ -51,7 +51,7 @@ config.load()
 
 HTML_TEMPLATE = """
 {% for rest in restaurants %}
-    <h3>{{ rest.name }}</h3>
+    <h3><a href="{{ rest.url }}">{{ rest.name }}</a></h3>
     <table style="width: 100%">
     {% for meal in rest.meals[day] %}
         <tr>
@@ -127,7 +127,7 @@ class Window(Gtk.Window):
         for day in range(0, 5):
             button = Gtk.RadioButton(calendar.day_name[day], group=last_button)
             self.buttons.pack_start(button, True, True, 5)
-            button.connect('toggled', self.day_chosen, day)
+            button.connect('clicked', self.day_chosen, day)
             button.set_mode(False)  # so it looks like a toggle button
             last_button = button
 
