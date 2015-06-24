@@ -7,7 +7,8 @@ from laileoulacuisse import fetcher
 TEMPLATE = """
 {% for rest in restaurants %}
 {{ rest.name }}
-===============
+{% for _ in range(rest.name|length) %}={% endfor %}
+
 {% for meal in rest.meals[day] %}
 {% if meal.price %}{{ meal.price }} {% endif %}{{ meal.name }}
 {% endfor %}
