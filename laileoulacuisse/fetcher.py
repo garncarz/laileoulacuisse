@@ -4,8 +4,9 @@ from http.cookiejar import CookieJar
 from lxml import etree
 import imp
 import inspect
-import os
 from pluginbase import PluginBase
+
+from laileoulacuisse.app import abs_path
 
 class Fetcher(metaclass=ABCMeta):
     def __init__(self):
@@ -58,8 +59,6 @@ class Fetcher(metaclass=ABCMeta):
                     for i, m in enumerate(meals)]
 
 
-abs_path = lambda path: os.path.join(os.path.dirname(
-    os.path.realpath(__file__)), path)
 plugin_base = PluginBase(package='fetchers')
 plugin_source = plugin_base.make_plugin_source(
     searchpath=[abs_path('fetchers')])
