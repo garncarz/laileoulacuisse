@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from gi.repository import Gtk, GLib, WebKit
 from jinja2 import Template
 
-from laileoulacuisse.app import APP_NAME, config, _
+from laileoulacuisse.app import APP_NAME, config
 from laileoulacuisse import fetcher
 
 APP_TITLE = _('The Wing or the Thigh')
