@@ -39,9 +39,9 @@ config.load()
 
 
 def run():
-    try:
+    if 'DISPLAY' in os.environ:
         from laileoulacuisse import gtk
         gtk.run()
-    except ImportError:
+    else:
         from laileoulacuisse import console
         console.run()
