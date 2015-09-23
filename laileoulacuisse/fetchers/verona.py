@@ -22,6 +22,7 @@ class Verona(Fetcher):
                     )
         tmpfile = tempfile.NamedTemporaryFile()
         tmpfile.write(response.readall())
+        tmpfile.file.flush()  # needed on Cygwin
 
         env = dict(os.environ)
         env['LANG'] = 'cs_CZ.UTF-8'

@@ -4,8 +4,10 @@ from http.cookiejar import CookieJar
 from lxml import etree
 import imp
 import inspect
-import os
 from pluginbase import PluginBase
+import re
+
+from laileoulacuisse.app import abs_path
 
 class Fetcher(metaclass=ABCMeta):
     def __init__(self):
@@ -45,7 +47,14 @@ class Fetcher(metaclass=ABCMeta):
         return etree.fromstring(data, parser=etree.HTMLParser())
 
     def not_upper(self, str):
-        return str.capitalize() if str.isupper() else str
+        isupper = sum(int(c.isupper()) for c in str) / float(len(str))
+        return str.capitalize() if isupper > 0.5 else str
+
+    def dict_meal(self, meal):
+        m = re.match(r'(?P<name>.*) (?P<price>\d+) *(,-|Kč)', meal.strip())
+        return {'name': meal} if not m \
+          else {'name': self.not_upper(m.group('name')),
+                'price': '%s Kč' % m.group('price')}
 
     def dict_meals(self, meals):
         return [{'name': self.not_upper(m)} for m in meals]
@@ -58,8 +67,6 @@ class Fetcher(metaclass=ABCMeta):
                     for i, m in enumerate(meals)]
 
 
-abs_path = lambda path: os.path.join(os.path.dirname(
-    os.path.realpath(__file__)), path)
 plugin_base = PluginBase(package='fetchers')
 plugin_source = plugin_base.make_plugin_source(
     searchpath=[abs_path('fetchers')])
