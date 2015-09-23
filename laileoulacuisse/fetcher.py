@@ -5,6 +5,7 @@ from lxml import etree
 import imp
 import inspect
 from pluginbase import PluginBase
+import re
 
 from laileoulacuisse.app import abs_path
 
@@ -46,7 +47,14 @@ class Fetcher(metaclass=ABCMeta):
         return etree.fromstring(data, parser=etree.HTMLParser())
 
     def not_upper(self, str):
-        return str.capitalize() if str.isupper() else str
+        isupper = sum(int(c.isupper()) for c in str) / float(len(str))
+        return str.capitalize() if isupper > 0.5 else str
+
+    def dict_meal(self, meal):
+        m = re.match(r'(?P<name>.*) (?P<price>\d+) *(,-|Kč)', meal.strip())
+        return {'name': meal} if not m \
+          else {'name': self.not_upper(m.group('name')),
+                'price': '%s Kč' % m.group('price')}
 
     def dict_meals(self, meals):
         return [{'name': self.not_upper(m)} for m in meals]

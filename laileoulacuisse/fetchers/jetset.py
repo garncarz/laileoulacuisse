@@ -2,16 +2,18 @@ from laileoulacuisse.fetcher import Fetcher
 
 class JetSet(Fetcher):
     name = 'Jet Set'
-    url = 'http://www.jetsetostrava.cz/tydenni-nabidka'
+    url = 'http://www.jetsetostrava.cz/denni-menu/'
 
     def fetch(self):
         tree = self.urlopen_tree(self.url)
-        menus = tree.xpath('//div[@class="day"]')
+        # TODO missing days
+        menus = tree.xpath('//div[@class="container"]'
+                           '//div[@class="page-outer"]'
+                           '/h2/following-sibling::p[1]')
         meals = []
         for menu in menus:
-            soup = menu.xpath('p[1]/text()')
-            mains = menu.xpath('p[position()>1]/text()')
-            prices = menu.xpath('p[position()>1]/strong/text()')
-            meals += [self.dict_meals(soup) +
-                      self.dict_meals_prices(mains, prices)]
+            lines = menu.xpath('string(.)').split('\n')
+            soup = [lines[0]]
+            mains = [self.dict_meal(meal) for meal in lines[1:]]
+            meals += [self.dict_meals(soup) + mains]
         return meals
