@@ -26,3 +26,6 @@ Fetchers parse HTML, XML and even Word (using external program Antiword)
 documents using `lxml.etree`, mainly by the means of XPath.
 New/modified XPath queries can be easily tested online at
 http://videlibri.sourceforge.net/cgi-bin/xidelcgi.
+
+
+<!-- ❄️ Hello to the GitHub Archive! ❄️ -->
